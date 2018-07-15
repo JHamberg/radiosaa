@@ -8,6 +8,9 @@ import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Store<T> {
     private static final String TAG = Store.class.getSimpleName();
     private Reducer reducer;
@@ -15,11 +18,14 @@ public class Store<T> {
     private IntentFilter receiveFilter;
     private LocalBroadcastManager broadcastManager;
     private BroadcastReceiver stateReceiver;
+    private Set<Runnable> subscribers;
 
     public Store(Context context, Reducer reducer){
         this.reducer = reducer;
         this.receiveFilter = new IntentFilter(reducer.getReceiveChannel());
         this.broadcastManager = LocalBroadcastManager.getInstance(context);
+        this.subscribers = new HashSet<>();
+
         this.stateReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -36,6 +42,14 @@ public class Store<T> {
         broadcastManager.unregisterReceiver(stateReceiver);
     }
 
+    public void subscribe(Runnable callback){
+        subscribers.add(callback);
+    }
+
+    public void unsubscribe(Runnable callback){
+        subscribers.remove(callback);
+    }
+
     public ApplicationState getState(){
         return state;
     }
@@ -44,6 +58,11 @@ public class Store<T> {
         Intent intent = populateIntent(action, value);
         Log.d(TAG, "Dispatching " + action + " with " + value + " on " + reducer.getSendChannel());
         broadcastManager.sendBroadcast(intent);
+        if(!subscribers.isEmpty()){
+            for(Runnable callback : subscribers){
+                callback.run();
+            }
+        }
     }
 
     private Intent populateIntent(String action, T value){

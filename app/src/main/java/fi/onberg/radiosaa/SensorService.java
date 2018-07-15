@@ -31,7 +31,6 @@ public class SensorService extends Service {
         Store<Double> sensorStore = application.getSensorStore();
         registerTemperatureSensor(sensorStore);
         registerConnectionListener(sensorStore);
-
         return START_STICKY;
     }
 
@@ -66,7 +65,7 @@ public class SensorService extends Service {
         // Setup an ongoing notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, SERVICE_CHANNEL);
         builder.setOngoing(true)
-                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setContentTitle(getString(R.string.app_name))
                 .setContentText(getString(R.string.app_name))
                 .setContentIntent(launchIntent);
 
